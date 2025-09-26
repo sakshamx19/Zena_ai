@@ -1,4 +1,4 @@
-
+from Utilis.functions import extract_api_version
 class LLMModule:
     def __init__(self, model_type, model_name, api_key, endpoint_url, temperature=0.7, max_tokens=150, top_p=0.9):
         self.model_type = model_type
