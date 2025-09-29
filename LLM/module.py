@@ -1,6 +1,14 @@
 from Utilis.functions import extract_api_version
+from langchain_openai import ChatOpenAI,AzureChatOpenAI
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline  
+from langchain_huggingface.llms import HuggingFacePipeline  
+
+
+
+
+
 class LLMModule:
-    def __init__(self, model_type, model_name, api_key, endpoint_url, temperature=0.7, max_tokens=150, top_p=0.9):
+    def __init__(self, model_type=None, model_name=None, api_key=None, endpoint_url=None, temperature=0.7, max_tokens=150, top_p=0.9):
         self.model_type = model_type
         self.model_name = model_name
         self.api_key = api_key
@@ -8,6 +16,7 @@ class LLMModule:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.top_p = top_p
+
 
     def test_connection(self):
         # Implement a method to test the connection to the LLM API
@@ -21,14 +30,38 @@ class LLMModule:
             return response
         
         elif self.model_type.lower() == "azure":
-            from openai import AzureOpenAI
-            client = AzureOpenAI(api_key=self.api_key, api_version=extract_api_version(self.endpoint_url), azure_endpoint=self.endpoint_url)
+            
+            client = AzureChatOpenAI(
+                model=self.model_name,
+                api_key=self.api_key,
+                api_version=extract_api_version(self.endpoint_url),
+                azure_endpoint=self.endpoint_url,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                top_p=self.top_p
+            )
             try:
-                response = client.chat.completions.create(model=self.model_name, messages=[{"role": "user", "content": "Hello"}])
+                response = client.invoke("Hello")
+                return client
             except Exception as e:
                 print(f"Error: {e}")
+                return 
             
-            return response
+        elif self.model_type.lower() == "huggingface":
+            model_id = self.model_name
+            tok = AutoTokenizer.from_pretrained(model_id)
+            mdl = AutoModelForCausalLM.from_pretrained(model_id)
+            gen = pipeline("text-generation", model=mdl, tokenizer=tok,
+                           max_new_tokens=self.max_tokens, pad_token_id=tok.eos_token_id, temperature=self.temperature, top_p=self.top_p)
+
+            client = HuggingFacePipeline(pipeline=gen)
+            try:
+                response = client.invoke("Hello")
+                print(response)
+                return client
+            except Exception as e:
+                print(f"Error: {e}")
+                return
     
     
     
