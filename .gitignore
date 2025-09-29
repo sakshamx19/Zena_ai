@@ -12,3 +12,4 @@ env/
 
 # Ignore VSCode settings (optional)
 .vscode/
+tempCodeRunnerFile.py
