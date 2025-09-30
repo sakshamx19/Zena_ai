@@ -2,7 +2,7 @@ from Utilis.functions import extract_api_version
 from langchain_openai import ChatOpenAI,AzureChatOpenAI
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline  
 from langchain_huggingface.llms import HuggingFacePipeline  
-
+from langchain_ollama import OllamaLLM
 
 
 
@@ -16,6 +16,7 @@ class LLMModule:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.top_p = top_p
+        self.client = self.test_connection()
 
 
     def test_connection(self):
@@ -55,6 +56,16 @@ class LLMModule:
                            max_new_tokens=self.max_tokens, pad_token_id=tok.eos_token_id, temperature=self.temperature, top_p=self.top_p)
 
             client = HuggingFacePipeline(pipeline=gen)
+            try:
+                response = client.invoke("Hello")
+                print(response)
+                return client
+            except Exception as e:
+                print(f"Error: {e}")
+                return
+        elif self.model_type.lower() == "ollama":
+
+            client = OllamaLLM(model=self.model_name)
             try:
                 response = client.invoke("Hello")
                 print(response)
