@@ -11,3 +11,8 @@ openai==1.109.1
 transformers>=4.43
 torch>=2.2
 typing_extensions>=4.8
+
+# Output Parser dependencies
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+markdown>=3.4.0
