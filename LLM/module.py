@@ -89,7 +89,7 @@ class OllamaConnection(BaseConnection):
 
 
 class LLMModule:
-    def __init__(self, model_type=None, model_name=None, api_key=None, endpoint_url=None, temperature=None, max_tokens=None, top_p=None):
+    def __init__(self, model_type=None, model_name=None, api_key=None, endpoint_url=None, temperature=None, max_tokens=None, top_p=None, system_prompt=None):
         self.model_type = model_type
         self.model_name = model_name
         self.api_key = api_key
@@ -97,7 +97,15 @@ class LLMModule:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.top_p = top_p
+        self.system_prompt = system_prompt  # Configurable system prompt
         self.client = self.test_connection()
+
+    def set_system_prompt(self, system_prompt):
+        """
+        Set or update the system prompt.
+        """
+        self.system_prompt = system_prompt
+        print(f"System prompt updated to: {self.system_prompt}")
 
     def test_connection(self):
         connection_classes = {
@@ -122,9 +130,44 @@ class LLMModule:
             print(f"Error: Unsupported model type '{self.model_type}'")
             return None
 
-    def generate_text(self, prompt):
-        # Implement a method to generate text based on the given prompt
-        pass
+    def generate_text(self, user_prompt):
+        print(f"Generating text for prompt: {user_prompt}")
+        if not self.client:
+            print("Error: No client initialized. Please check the connection.")
+            return None
+
+        try:
+            if self.model_type.lower() == "azure":
+                messages = [
+                    {"role": "system", "content": self.system_prompt or "You are a helpful assistant."},
+                    {"role": "user", "content": user_prompt}
+                ]
+                print(f"Sending messages to Azure: {messages}")
+                response = self.client.invoke(messages)
+                print(f"Azure response received: {response}")
+                return response.content if hasattr(response, 'content') else response
+
+            # Example for HuggingFace-like models
+            elif self.model_type.lower() == "huggingface":
+                combined_prompt = f"{self.system_prompt}\n{user_prompt}"
+                response = self.client.invoke(combined_prompt)
+                return response
+
+            # Example for Ollama-like models
+            elif self.model_type.lower() == "ollama":
+                combined_prompt = f"{self.system_prompt}\n{user_prompt}"
+                response = self.client.invoke(combined_prompt)
+                return response
+
+            else:
+                print(f"Error: Unsupported model type '{self.model_type}'")
+                return None
+
+        except Exception as e:
+            print(f"Error during text generation: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            return None
 
     def set_parameters(self, temperature=None, max_tokens=None, top_p=None):
         if temperature is not None:
