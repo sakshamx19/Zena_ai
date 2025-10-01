@@ -3,18 +3,19 @@ from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 from langchain_huggingface.llms import HuggingFacePipeline
 from langchain_ollama import OllamaLLM
-from typing_extensions import override  # Import the @override decorator
+from typing_extensions import override
 
 
 class BaseConnection:
-    def __init__(self, model_name, api_key=None, endpoint_url=None, temperature=None, max_tokens=None, top_p=None):
+    def __init__(self, model_name, model_type, api_key=None, endpoint_url=None, temperature=None, max_tokens=None, top_p=None):
         self.model_name = model_name
+        self.model_type = model_type
         self.api_key = api_key
         self.endpoint_url = endpoint_url
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.top_p = top_p
-        self.client = None  
+        self.client = None
 
     def connect(self):
         raise NotImplementedError("Subclasses must implement the connect method")
@@ -24,7 +25,7 @@ class OpenAIConnection(BaseConnection):
     @override
     def connect(self):
         import openai
-        self.client = openai.Client(api_key=self.api_key)  
+        self.client = openai.Client(api_key=self.api_key)
         try:
             response = self.client.chats.create(model=self.model_name, messages=[{"role": "user", "content": "Hello"}])
             return self.client
@@ -64,7 +65,7 @@ class HuggingFaceConnection(BaseConnection):
                        pad_token_id=tok.eos_token_id,
                        temperature=self.temperature or 0.7,
                        top_p=self.top_p or 0.9)
-        self.client = HuggingFacePipeline(pipeline=gen)  # Set the client attribute
+        self.client = HuggingFacePipeline(pipeline=gen)
         try:
             response = self.client.invoke("Hello")
             print(response)
@@ -77,7 +78,7 @@ class HuggingFaceConnection(BaseConnection):
 class OllamaConnection(BaseConnection):
     @override
     def connect(self):
-        self.client = OllamaLLM(model=self.model_name)  # Set the client attribute
+        self.client = OllamaLLM(model=self.model_name)
         try:
             response = self.client.invoke("Hello")
             print(response)
@@ -109,6 +110,7 @@ class LLMModule:
         if connection_class:
             connection = connection_class(
                 model_name=self.model_name,
+                model_type=self.model_type,
                 api_key=self.api_key,
                 endpoint_url=self.endpoint_url,
                 temperature=self.temperature,

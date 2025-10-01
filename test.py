@@ -20,10 +20,10 @@ def test_llm_module():
         model_name="pssl-gpt-4o",
         api_key="d004ba2610a04317bda192df2e53b71c",
         endpoint_url="https://genai-pssl-sweden.openai.azure.com/openai/deployments/pssl-gpt-4o/chat/completions?api-version=2024-08-01-preview",
-        temperature = 0.2
+        temperature=0.2
     )
     if azure_module.client:
-        print("Azure connection successful!")
+        print("Azure connection successfull")
     else:
         print("Azure connection failed.")
 
